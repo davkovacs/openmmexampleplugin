@@ -35,6 +35,9 @@
 #include "openmm/internal/ContextImpl.h"
 #include "openmm/reference/RealVec.h"
 #include "openmm/reference/ReferencePlatform.h"
+#include <iostream>
+#include <julia.h>
+
 
 using namespace ExamplePlugin;
 using namespace OpenMM;
@@ -53,38 +56,50 @@ static vector<RealVec>& extractForces(ContextImpl& context) {
 void ReferenceCalcExampleForceKernel::initialize(const System& system, const ExampleForce& force) {
     // Initialize bond parameters.
     
-    int numBonds = force.getNumBonds();
-    particle1.resize(numBonds);
-    particle2.resize(numBonds);
-    length.resize(numBonds);
-    k.resize(numBonds);
-    for (int i = 0; i < numBonds; i++)
-        force.getBondParameters(i, particle1[i], particle2[i], length[i], k[i]);
+    // int numBonds = force.getNumBonds();
+    // particle1.resize(numBonds);
+    // particle2.resize(numBonds);
+    // length.resize(numBonds);
+    // k.resize(numBonds);
+    // for (int i = 0; i < numBonds; i++)
+    //     force.getBondParameters(i, particle1[i], particle2[i], length[i], k[i]);
 }
 
 double ReferenceCalcExampleForceKernel::execute(ContextImpl& context, bool includeForces, bool includeEnergy) {
-    vector<RealVec>& pos = extractPositions(context);
+    vector<Vec3>& posData = extractPositions(context);
     vector<RealVec>& force = extractForces(context);
-    int numBonds = particle1.size();
-    double energy = 0;
-    
-    // Compute the interactions.
-    
-    for (int i = 0; i < numBonds; i++) {
-        int p1 = particle1[i];
-        int p2 = particle2[i];
-        RealVec delta = pos[p1]-pos[p2];
-        RealOpenMM r2 = delta.dot(delta);
-        RealOpenMM r = sqrt(r2);
-        RealOpenMM dr = (r-length[i]);
-        RealOpenMM dr2 = dr*dr;
-        energy += k[i]*dr2*dr2;
-        RealOpenMM dEdR = 4*k[i]*dr2*dr;
-        dEdR = (r > 0) ? (dEdR/r) : 0;
-        force[p1] -= delta*dEdR;
-        force[p2] += delta*dEdR;
+    int numParticles = context.getSystem().getNumParticles();  
+    vector<double> masses;
+    for (int i = 0; i < numParticles; i++)
+    {
+        double mass = context.getSystem().getParticleMass(i); 
+        //cout << mass << "\n";
+        masses.push_back(mass);
+        force[i] += RealVec(2.0, 2.0, 2.0); 
     }
-    return energy;
+    
+    // vector<RealVec>& pos = extractPositions(context);
+    // vector<RealVec>& force = extractForces(context);
+    // int numBonds = particle1.size();
+    // double energy = 0;
+    
+    // // Compute the interactions.
+    
+    // for (int i = 0; i < numBonds; i++) {
+    //     int p1 = particle1[i];
+    //     int p2 = particle2[i];
+    //     RealVec delta = pos[p1]-pos[p2];
+    //     RealOpenMM r2 = delta.dot(delta);
+    //     RealOpenMM r = sqrt(r2);
+    //     RealOpenMM dr = (r-length[i]);
+    //     RealOpenMM dr2 = dr*dr;
+    //     energy += k[i]*dr2*dr2;
+    //     RealOpenMM dEdR = 4*k[i]*dr2*dr;
+    //     dEdR = (r > 0) ? (dEdR/r) : 0;
+    //     force[p1] -= delta*dEdR;
+    //     force[p2] += delta*dEdR;
+    // }
+    // return energy;
 }
 
 void ReferenceCalcExampleForceKernel::copyParametersToContext(ContextImpl& context, const ExampleForce& force) {

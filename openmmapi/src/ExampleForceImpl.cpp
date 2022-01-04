@@ -40,6 +40,7 @@
 #include <map>
 #include <set>
 #include <sstream>
+#include <julia.h>
 
 using namespace ExamplePlugin;
 using namespace OpenMM;
@@ -51,9 +52,21 @@ ExampleForceImpl::ExampleForceImpl(const ExampleForce& owner) : owner(owner) {
 ExampleForceImpl::~ExampleForceImpl() {
 }
 
+jl_function_t* _atoms_from_c; 
+jl_value_t* _energyfcn;
+jl_value_t* _forcefcn;
+jl_value_t* _stressfcn;
+
 void ExampleForceImpl::initialize(ContextImpl& context) {
     kernel = context.getPlatform().createKernel(CalcExampleForceKernel::Name(), context);
     kernel.getAs<CalcExampleForceKernel>().initialize(context.getSystem(), owner);
+    jl_init();
+    jl_eval_string("println(\"Julia Running\")");
+    jl_eval_string("using JuLIP, ACE");
+    _atoms_from_c = jl_eval_string("(X, Z, cell, bc) -> Atoms(X = X, Z = Z, cell=cell, pbc = Bool.(bc))");
+    _energyfcn = (jl_value_t*)jl_get_function(jl_main_module, "energy");
+    _forcefcn = (jl_value_t*)jl_eval_string("(calc, at) -> mat(forces(calc, at))[:]");
+    _stressfcn = (jl_value_t*)jl_eval_string("(calc, at) -> vcat(stress(calc, at)...)");
 }
 
 double ExampleForceImpl::calcForcesAndEnergy(ContextImpl& context, bool includeForces, bool includeEnergy, int groups) {
