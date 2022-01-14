@@ -35,6 +35,9 @@
 #include "ExampleKernels.h"
 #include "openmm/Platform.h"
 #include <vector>
+#include <julia.h>
+
+double unbox_float64(jl_value_t*);
 
 namespace ExamplePlugin {
 
@@ -58,9 +61,13 @@ public:
      * @param context        the context in which to execute this kernel
      * @param includeForces  true if forces should be calculated
      * @param includeEnergy  true if the energy should be calculated
+     * @param _atoms_from_c
+     * @param _energyfcn
+     * @param _forcefn
+     * @param _stressfn  
      * @return the potential energy due to the force
      */
-    double execute(OpenMM::ContextImpl& context, bool includeForces, bool includeEnergy);
+    double execute(OpenMM::ContextImpl& context, bool includeForces, bool includeEnergy, jl_function_t*& _atoms_from_c, jl_value_t*& _energyfcn, jl_value_t*& _forcefn, jl_value_t*& _stressfcn);
     /**
      * Copy changed parameters over to a context.
      *

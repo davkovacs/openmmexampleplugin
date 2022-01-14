@@ -62,16 +62,24 @@ void ExampleForceImpl::initialize(ContextImpl& context) {
     kernel.getAs<CalcExampleForceKernel>().initialize(context.getSystem(), owner);
     jl_init();
     jl_eval_string("println(\"Julia Running\")");
+    jl_eval_string("using Pkg; Pkg.activate(\"/home/cdt1906/.julia/environments/ace1\")");
     jl_eval_string("using JuLIP, ACE");
     _atoms_from_c = jl_eval_string("(X, Z, cell, bc) -> Atoms(X = X, Z = Z, cell=cell, pbc = Bool.(bc))");
     _energyfcn = (jl_value_t*)jl_get_function(jl_main_module, "energy");
     _forcefcn = (jl_value_t*)jl_eval_string("(calc, at) -> mat(forces(calc, at))[:]");
     _stressfcn = (jl_value_t*)jl_eval_string("(calc, at) -> vcat(stress(calc, at)...)");
+    
+    // Not yet sure where this should come and how
+    jl_eval_string("IP = read_dict( load_dict(\"/home/cdt1906/Documents/phd/ACE_dev/interfaces/test_openmm/CH_ace_test.json\")[\"IP\"])");
+    
+    if (jl_exception_occurred())
+        printf("%s \n", jl_typeof_str(jl_exception_occurred()));
 }
 
 double ExampleForceImpl::calcForcesAndEnergy(ContextImpl& context, bool includeForces, bool includeEnergy, int groups) {
     if ((groups&(1<<owner.getForceGroup())) != 0)
-        return kernel.getAs<CalcExampleForceKernel>().execute(context, includeForces, includeEnergy);
+        jl_eval_string("println(\"Calling actually ExampleForceImpl to get energies and forces\")");
+        return kernel.getAs<CalcExampleForceKernel>().execute(context, includeForces, includeEnergy, _atoms_from_c, _energyfcn, _forcefcn, _stressfcn);
     return 0.0;
 }
 
