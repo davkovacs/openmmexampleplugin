@@ -1,3 +1,5 @@
+OpenMM evaluator for Atomic Cluster Expansion models. 
+
 OpenMM Example Plugin
 =====================
 
