@@ -51,6 +51,8 @@ double unbox_float64(jl_value_t* jlval) {
    return 0.0;
 }
 
+std::map<int, int> mass_to_Z {{1, 1}, {12, 6}, {14, 7}, {16, 8}, {19, 9}, {31, 15}, {32, 16}, {35, 17}, {80, 35}, {127, 53}};
+
 static vector<RealVec>& extractPositions(ContextImpl& context) {
     ReferencePlatform::PlatformData* data = reinterpret_cast<ReferencePlatform::PlatformData*>(context.getPlatformData());
     return *((vector<RealVec>*) data->positions);
@@ -62,7 +64,6 @@ static vector<RealVec>& extractForces(ContextImpl& context) {
 }
 
 void ReferenceCalcExampleForceKernel::initialize(const System& system, const ExampleForce& force) {
-    std::map<int, int> mass_to_Z {{1, 1}, {12, 6}, {14, 7}, {16, 8}, {19, 9}, {31, 15}, {32, 16}, {35, 17}, {80, 35}, {127, 53}};
 
     // Initialize bond parameters.
     
@@ -84,9 +85,11 @@ double ReferenceCalcExampleForceKernel::execute(ContextImpl& context, bool inclu
     {
         double mass = context.getSystem().getParticleMass(i); 
         // cout << std::round(mass) << "\n";
-        Z.push_back(std::round(mass));
+        Z.push_back(mass_to_Z[std::round(mass)]);
         // force[i] += RealVec(2.0, 2.0, 2.0); 
     }
+
+    
 
     jl_value_t* jl_float64 = jl_apply_array_type((jl_value_t*)jl_float64_type, 1);
     jl_value_t* jl_int32 = jl_apply_array_type((jl_value_t*)jl_int32_type, 1);
@@ -99,7 +102,7 @@ double ReferenceCalcExampleForceKernel::execute(ContextImpl& context, bool inclu
     for (int i = 0; i < numParticles; i++){
         for (int j = 0; j < 3; j++)
         {
-            XData[3*i+j] = posData[i][j];
+            XData[3*i+j] = 10 * posData[i][j];  // nm to A
         }
     }
 
@@ -126,6 +129,8 @@ double ReferenceCalcExampleForceKernel::execute(ContextImpl& context, bool inclu
 
     jl_set_global(jl_main_module, jl_symbol("at"), at);
 
+    jl_eval_string("@show at");
+
     double E = 0.0; 
     jl_value_t* jlE;
     cout << "Calling the Juila energy function" << "\n";
@@ -135,7 +140,7 @@ double ReferenceCalcExampleForceKernel::execute(ContextImpl& context, bool inclu
                 jl_typeof_str(jl_exception_occurred()));
 
     jlE = jl_call2(_energyfcn, calc, at);   
-    
+
     if (jl_exception_occurred()) {
         printf("Exception at jl_call2(_energyfcn, calc, at) : %s \n", 
                 jl_typeof_str(jl_exception_occurred()));
@@ -146,7 +151,7 @@ double ReferenceCalcExampleForceKernel::execute(ContextImpl& context, bool inclu
     
     JL_GC_POP();
 
-    return E;
+    return E * 96.48533288249877;
 
     // vector<RealVec>& pos = extractPositions(context);
     // vector<RealVec>& force = extractForces(context);
