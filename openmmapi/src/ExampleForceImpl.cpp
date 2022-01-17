@@ -61,9 +61,10 @@ void ExampleForceImpl::initialize(ContextImpl& context) {
     kernel = context.getPlatform().createKernel(CalcExampleForceKernel::Name(), context);
     kernel.getAs<CalcExampleForceKernel>().initialize(context.getSystem(), owner);
     jl_init();
-    jl_eval_string("println(\"Julia Running\")");
-    jl_eval_string("using Pkg; Pkg.activate(\"/home/cdt1906/.julia/environments/ace1\")");
-    jl_eval_string("using JuLIP, ACE");
+    // jl_eval_string("println(\"Julia Running\")");
+    // jl_eval_string("using Pkg; Pkg.activate(\"/home/cdt1906/.julia/environments/ace1\")");
+    jl_eval_string("try try using ACE2 catch; using ACE1 end catch; using ACE end;");
+    jl_eval_string("using JuLIP");
     _atoms_from_c = jl_eval_string("(X, Z, cell, bc) -> Atoms(X = X, Z = Z, cell=cell, pbc = Bool.(bc))");
     _energyfcn = (jl_value_t*)jl_get_function(jl_main_module, "energy");
     _forcefcn = (jl_value_t*)jl_eval_string("(calc, at) -> mat(forces(calc, at))[:]");
@@ -78,7 +79,7 @@ void ExampleForceImpl::initialize(ContextImpl& context) {
 
 double ExampleForceImpl::calcForcesAndEnergy(ContextImpl& context, bool includeForces, bool includeEnergy, int groups) {
     if ((groups&(1<<owner.getForceGroup())) != 0)
-        jl_eval_string("println(\"Calling actually ExampleForceImpl to get energies and forces\")");
+        //jl_eval_string("println(\"Calling actually ExampleForceImpl to get energies and forces\")");
         return kernel.getAs<CalcExampleForceKernel>().execute(context, includeForces, includeEnergy, _atoms_from_c, _energyfcn, _forcefcn, _stressfcn);
     return 0.0;
 }

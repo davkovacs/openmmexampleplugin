@@ -53,6 +53,8 @@ double unbox_float64(jl_value_t* jlval) {
 
 std::map<int, int> mass_to_Z {{1, 1}, {12, 6}, {14, 7}, {16, 8}, {19, 9}, {31, 15}, {32, 16}, {35, 17}, {80, 35}, {127, 53}};
 
+const double eV_to_kJ_per_mol = 96.48533212331002; // unit conversion factor from WolframAlpha
+
 static vector<RealVec>& extractPositions(ContextImpl& context) {
     ReferencePlatform::PlatformData* data = reinterpret_cast<ReferencePlatform::PlatformData*>(context.getPlatformData());
     return *((vector<RealVec>*) data->positions);
@@ -76,7 +78,7 @@ void ReferenceCalcExampleForceKernel::initialize(const System& system, const Exa
     //     force.getBondParameters(i, particle1[i], particle2[i], length[i], k[i]);
 }
 
-double ReferenceCalcExampleForceKernel::execute(ContextImpl& context, bool includeForces, bool includeEnergy, jl_function_t*& _atoms_from_c, jl_value_t*& _energyfcn, jl_value_t*& _forcefn, jl_value_t*& _stressfcn) {
+double ReferenceCalcExampleForceKernel::execute(ContextImpl& context, bool includeForces, bool includeEnergy, jl_function_t*& _atoms_from_c, jl_value_t*& _energyfcn, jl_value_t*& _forcefcn, jl_value_t*& _stressfcn) {
     vector<Vec3>& posData = extractPositions(context);
     vector<RealVec>& force = extractForces(context);
     int numParticles = context.getSystem().getNumParticles();  
@@ -88,8 +90,6 @@ double ReferenceCalcExampleForceKernel::execute(ContextImpl& context, bool inclu
         Z.push_back(mass_to_Z[std::round(mass)]);
         // force[i] += RealVec(2.0, 2.0, 2.0); 
     }
-
-    
 
     jl_value_t* jl_float64 = jl_apply_array_type((jl_value_t*)jl_float64_type, 1);
     jl_value_t* jl_int32 = jl_apply_array_type((jl_value_t*)jl_int32_type, 1);
@@ -129,11 +129,9 @@ double ReferenceCalcExampleForceKernel::execute(ContextImpl& context, bool inclu
 
     jl_set_global(jl_main_module, jl_symbol("at"), at);
 
-    jl_eval_string("@show at");
-
     double E = 0.0; 
     jl_value_t* jlE;
-    cout << "Calling the Juila energy function" << "\n";
+    // cout << "Calling the Juila energy function" << "\n";
 
     if (jl_exception_occurred())
         printf("Exception before calling energy function : %s \n", 
@@ -148,32 +146,28 @@ double ReferenceCalcExampleForceKernel::execute(ContextImpl& context, bool inclu
     } else {
         E = unbox_float64(jlE); 
     }
+
+    jl_array_t* _F = (jl_array_t*)jl_call2(_forcefcn, calc, at);
+    double *Fdata = (double*)jl_array_data(_F); 
+    // for (int i = 0; i < 3*numParticles; i++) F[i] = Fdata[i] 
+
+    for (int i = 0; i < numParticles; i++)
+    {
+        force[i] += RealVec(Fdata[3*i] * eV_to_kJ_per_mol, Fdata[3*i+1] * eV_to_kJ_per_mol, Fdata[3*i+2] * eV_to_kJ_per_mol); 
+    }
     
     JL_GC_POP();
 
-    return E * 96.48533288249877;
+    //cout << "ACE potential energy is " << E << " eV \n";
+    return E * eV_to_kJ_per_mol;  // unit conversion factor from WolframAlpha
 
     // vector<RealVec>& pos = extractPositions(context);
     // vector<RealVec>& force = extractForces(context);
     // int numBonds = particle1.size();
-    // double energy = 0;
     
     // // Compute the interactions.
     
-    // for (int i = 0; i < numBonds; i++) {
-    //     int p1 = particle1[i];
-    //     int p2 = particle2[i];
-    //     RealVec delta = pos[p1]-pos[p2];
-    //     RealOpenMM r2 = delta.dot(delta);
-    //     RealOpenMM r = sqrt(r2);
-    //     RealOpenMM dr = (r-length[i]);
-    //     RealOpenMM dr2 = dr*dr;
-    //     energy += k[i]*dr2*dr2;
-    //     RealOpenMM dEdR = 4*k[i]*dr2*dr;
-    //     dEdR = (r > 0) ? (dEdR/r) : 0;
-    //     force[p1] -= delta*dEdR;
-    //     force[p2] += delta*dEdR;
-    // }
+
     // return energy;
 }
 
