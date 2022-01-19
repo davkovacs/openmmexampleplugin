@@ -43,6 +43,7 @@ using namespace ExamplePlugin;
 using namespace OpenMM;
 using namespace std;
 
+// turn Float64 returned by Julia into C Float number
 double unbox_float64(jl_value_t* jlval) {
    if jl_typeis(jlval, jl_float64_type) {
       return jl_unbox_float64(jlval);
@@ -51,53 +52,48 @@ double unbox_float64(jl_value_t* jlval) {
    return 0.0;
 }
 
+// map masses to atomic numbers (necessary for ACE)
 std::map<int, int> mass_to_Z {{1, 1}, {12, 6}, {14, 7}, {16, 8}, {19, 9}, {31, 15}, {32, 16}, {35, 17}, {80, 35}, {127, 53}};
 
+// unit conversion factor between eV and kJ/mol
 const double eV_to_kJ_per_mol = 96.48533212331002; // unit conversion factor from WolframAlpha
 
+// get the poistions of the atoms
 static vector<RealVec>& extractPositions(ContextImpl& context) {
     ReferencePlatform::PlatformData* data = reinterpret_cast<ReferencePlatform::PlatformData*>(context.getPlatformData());
     return *((vector<RealVec>*) data->positions);
 }
 
+// get the forces on the atoms
 static vector<RealVec>& extractForces(ContextImpl& context) {
     ReferencePlatform::PlatformData* data = reinterpret_cast<ReferencePlatform::PlatformData*>(context.getPlatformData());
     return *((vector<RealVec>*) data->forces);
 }
 
 void ReferenceCalcExampleForceKernel::initialize(const System& system, const ExampleForce& force) {
-
-    // Initialize bond parameters.
-    
-    // int numBonds = force.getNumBonds();
-    // particle1.resize(numBonds);
-    // particle2.resize(numBonds);
-    // length.resize(numBonds);
-    // k.resize(numBonds);
-    // for (int i = 0; i < numBonds; i++)
-    //     force.getBondParameters(i, particle1[i], particle2[i], length[i], k[i]);
 }
 
 double ReferenceCalcExampleForceKernel::execute(ContextImpl& context, bool includeForces, bool includeEnergy, jl_function_t*& _atoms_from_c, jl_value_t*& _energyfcn, jl_value_t*& _forcefcn, jl_value_t*& _stressfcn) {
-    vector<Vec3>& posData = extractPositions(context);
-    vector<RealVec>& force = extractForces(context);
-    int numParticles = context.getSystem().getNumParticles();  
-    vector<int> Z;
+    vector<Vec3>& posData = extractPositions(context);  // get atomic positions
+    vector<RealVec>& force = extractForces(context);  // get forces on the atoms
+    int numParticles = context.getSystem().getNumParticles();  // get number of particles
+    int Z[numParticles];  // create vector to store atomic numbers
+    // loop over the particles
     for (int i = 0; i < numParticles; i++)
     {
-        double mass = context.getSystem().getParticleMass(i); 
-        // cout << std::round(mass) << "\n";
-        Z.push_back(mass_to_Z[std::round(mass)]);
-        // force[i] += RealVec(2.0, 2.0, 2.0); 
+        double mass = context.getSystem().getParticleMass(i);  // get the mass of the particle
+        Z[i] = mass_to_Z[std::round(mass)];  // add atomic number to array
     }
 
+    // create objects to store necessary Julia arrays with correct types 
     jl_value_t* jl_float64 = jl_apply_array_type((jl_value_t*)jl_float64_type, 1);
     jl_value_t* jl_int32 = jl_apply_array_type((jl_value_t*)jl_int32_type, 1);
-    jl_array_t* _X = jl_alloc_array_1d(jl_float64, 3 * numParticles);
-    jl_array_t* _cell = jl_alloc_array_1d(jl_float64, 9);
-    jl_array_t* _bc = jl_alloc_array_1d(jl_int32, 3);
-    jl_array_t* _Z = jl_alloc_array_1d(jl_int32, numParticles);
+    jl_array_t* _X = jl_alloc_array_1d(jl_float64, 3 * numParticles);  // positions
+    jl_array_t* _cell = jl_alloc_array_1d(jl_float64, 9);  // cell
+    jl_array_t* _bc = jl_alloc_array_1d(jl_int32, 3);  // boundary conditions
+    jl_array_t* _Z = jl_alloc_array_1d(jl_int32, numParticles);  // atomic numbers
 
+    // Pass positions to Julia
     double *XData = (double*)jl_array_data(_X);
     for (int i = 0; i < numParticles; i++){
         for (int j = 0; j < 3; j++)
@@ -106,20 +102,27 @@ double ReferenceCalcExampleForceKernel::execute(ContextImpl& context, bool inclu
         }
     }
 
+    // TODO OBTAIN THIS AUTOMATICALLY
+    // Pass the cell to Julia
     double cell [9] = {50.0, 0.0, 0.0, 0.0, 50.0, 0.0, 0.0, 0.0, 50.0};
     double *cellData = (double*)jl_array_data(_cell);
     for (int i = 0; i < 9; i++) cellData[i] = cell[i];
 
+    // TODO OBTAIN THIS AUTOMATICALLY
+    // Pass boundary conditions to Julia
     int bc [3] = {0, 0, 0};
     int32_t *bcData = (int32_t*)jl_array_data(_bc);
     for (int i = 0; i < 3; i++) bcData[i] = bc[i];
 
+    // Pass atomic numbers to Julia
     int32_t *ZData = (int32_t*)jl_array_data(_Z);
     for (int i = 0; i < numParticles; i++) ZData[i] = Z[i]; 
 
+    // create atoms object in Julia
     jl_value_t* at_args[] = {(jl_value_t*)_X, (jl_value_t*)_Z, (jl_value_t*)_cell, (jl_value_t*)_bc};   
     jl_value_t* at = jl_call(_atoms_from_c, at_args, 4);
 
+    // ensure args doesn't get garbage collected
     jl_value_t** args; 
     JL_GC_PUSHARGS(args, 2);
 
@@ -127,48 +130,37 @@ double ReferenceCalcExampleForceKernel::execute(ContextImpl& context, bool inclu
     args[0] = calc; 
     args[1] = at;
 
+    // create a global variable for the atoms object at
     jl_set_global(jl_main_module, jl_symbol("at"), at);
+    // jl_eval_string("@show at");  // can be used to print the Atoms object from Julia
 
-    double E = 0.0; 
+    // compute the energy
+    double E = 0.0;  
     jl_value_t* jlE;
-    // cout << "Calling the Juila energy function" << "\n";
 
-    if (jl_exception_occurred())
-        printf("Exception before calling energy function : %s \n", 
-                jl_typeof_str(jl_exception_occurred()));
-
-    jlE = jl_call2(_energyfcn, calc, at);   
+    jlE = jl_call2(_energyfcn, calc, at);  // calling the energy function energy(IP, at) 
 
     if (jl_exception_occurred()) {
         printf("Exception at jl_call2(_energyfcn, calc, at) : %s \n", 
                 jl_typeof_str(jl_exception_occurred()));
         jl_errorf("Something when wrong calling the energy\n");
     } else {
-        E = unbox_float64(jlE); 
+        E = unbox_float64(jlE);  // unbox energy from Julia Float to C++
     }
 
+    // compute the forces
     jl_array_t* _F = (jl_array_t*)jl_call2(_forcefcn, calc, at);
     double *Fdata = (double*)jl_array_data(_F); 
-    // for (int i = 0; i < 3*numParticles; i++) F[i] = Fdata[i] 
 
+    // write forces to the force array. (unit conversion done here)
     for (int i = 0; i < numParticles; i++)
     {
-        force[i] += RealVec(Fdata[3*i] * eV_to_kJ_per_mol, Fdata[3*i+1] * eV_to_kJ_per_mol, Fdata[3*i+2] * eV_to_kJ_per_mol); 
+        force[i] += RealVec(Fdata[3*i] * eV_to_kJ_per_mol * 10, Fdata[3*i+1] * eV_to_kJ_per_mol * 10, Fdata[3*i+2] * eV_to_kJ_per_mol * 10); 
     }
     
     JL_GC_POP();
 
-    //cout << "ACE potential energy is " << E << " eV \n";
-    return E * eV_to_kJ_per_mol;  // unit conversion factor from WolframAlpha
-
-    // vector<RealVec>& pos = extractPositions(context);
-    // vector<RealVec>& force = extractForces(context);
-    // int numBonds = particle1.size();
-    
-    // // Compute the interactions.
-    
-
-    // return energy;
+    return E * eV_to_kJ_per_mol;  // Return energy in kJ/mol
 }
 
 void ReferenceCalcExampleForceKernel::copyParametersToContext(ContextImpl& context, const ExampleForce& force) {
