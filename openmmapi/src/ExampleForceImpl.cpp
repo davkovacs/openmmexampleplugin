@@ -41,12 +41,14 @@
 #include <set>
 #include <sstream>
 #include <julia.h>
+#include <iostream>
 
 using namespace ExamplePlugin;
 using namespace OpenMM;
 using namespace std;
 
 ExampleForceImpl::ExampleForceImpl(const ExampleForce& owner) : owner(owner) {
+    ip_path = owner.ace_path;
 }
 
 ExampleForceImpl::~ExampleForceImpl() {
@@ -58,6 +60,11 @@ jl_value_t* _forcefcn;
 jl_value_t* _stressfcn;
 
 void ExampleForceImpl::initialize(ContextImpl& context) {
+    for (int i = 0; i < 8; i++)
+    {
+        double mass = context.getSystem().getParticleMass(i);  // get the mass of the particle
+        cout << mass << "\n";
+    }
     kernel = context.getPlatform().createKernel(CalcExampleForceKernel::Name(), context);
     kernel.getAs<CalcExampleForceKernel>().initialize(context.getSystem(), owner);
     jl_init();  // start up Julia process and load packages
@@ -69,8 +76,10 @@ void ExampleForceImpl::initialize(ContextImpl& context) {
     _forcefcn = (jl_value_t*)jl_eval_string("(calc, at) -> mat(forces(calc, at))[:]");
     _stressfcn = (jl_value_t*)jl_eval_string("(calc, at) -> vcat(stress(calc, at)...)");
 
-    // Not yet sure where this should come and how
-    jl_eval_string("IP = read_dict( load_dict(\"/home/cdt1906/Documents/phd/ACE_dev/interfaces/test_openmm/CH_ace_test.json\")[\"IP\"])");
+    std::string read_ip = "IP = read_dict( load_dict(\"" + this->ip_path +  "\")[\"IP\"])";
+    cout << read_ip << "\n";
+    jl_eval_string(read_ip.c_str());
+    //jl_eval_string("IP = read_dict( load_dict(\"/home/cdt1906/Documents/phd/ACE_dev/interfaces/test_openmm/CH_ace_test.json\")[\"IP\"])");
     
     // check if there were any Julia exceptions and print them
     if (jl_exception_occurred())

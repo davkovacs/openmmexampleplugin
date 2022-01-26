@@ -51,6 +51,7 @@ class OPENMM_EXPORT_EXAMPLE ExampleForceImpl : public OpenMM::ForceImpl {
 public:
     ExampleForceImpl(const ExampleForce& owner);
     ~ExampleForceImpl();
+    std::string ip_path;
     void initialize(OpenMM::ContextImpl& context);
     const ExampleForce& getOwner() const {
         return owner;

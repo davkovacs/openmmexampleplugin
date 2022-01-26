@@ -48,6 +48,10 @@ namespace ExamplePlugin {
 class OPENMM_EXPORT_EXAMPLE ExampleForce : public OpenMM::Force {
 public:
     /**
+     * store path to potential
+     */
+    std::string ace_path; 
+    /**
      * Create an ExampleForce.
      */
     ExampleForce(std::string IP_path);
