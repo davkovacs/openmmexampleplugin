@@ -36,6 +36,7 @@
 #include "openmm/Force.h"
 #include <vector>
 #include "internal/windowsExportExample.h"
+#include <string>
 
 namespace ExamplePlugin {
 
@@ -49,7 +50,7 @@ public:
     /**
      * Create an ExampleForce.
      */
-    ExampleForce();
+    ExampleForce(std::string IP_path);
     /**
      * Get the number of bond stretch terms in the potential function
      */

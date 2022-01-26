@@ -62,9 +62,10 @@ FOREACH(subdir ${EXAMPLE_PLUGIN_SOURCE_SUBDIRS})
 ENDFOREACH(subdir)
 
 # julia header
-SET(JULIA_DIR "/home/cdt1906/Applications/julia-1.6.1" CACHE PATH "Where Julia is installed")
+SET(JULIA_DIR "/home/cdt1906/Applications/julia-1.7.1" CACHE PATH "Where Julia is installed")
 INCLUDE_DIRECTORIES("${JULIA_DIR}/include/julia")
-link_directories("${JULIA_DIR}/lib")
+link_directories("${JULIA_DIR}/lib/julia")
+link_directories("${JULIA_DIR}/lib/")
 
 # Create the library.
 

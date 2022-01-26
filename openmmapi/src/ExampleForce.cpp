@@ -38,7 +38,7 @@ using namespace ExamplePlugin;
 using namespace OpenMM;
 using namespace std;
 
-ExampleForce::ExampleForce() {
+ExampleForce::ExampleForce(std::string IP_path) {
 }
 
 int ExampleForce::addBond(int particle1, int particle2, double length, double k) {

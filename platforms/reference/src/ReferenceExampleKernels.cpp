@@ -101,16 +101,30 @@ double ReferenceCalcExampleForceKernel::execute(ContextImpl& context, bool inclu
             XData[3*i+j] = 10 * posData[i][j];  // nm to A
         }
     }
+    //cout << "############## NO PROBLEM HERE ##################" << "\n";
 
-    // TODO OBTAIN THIS AUTOMATICALLY
+    // Set the default cell size for non-periodic simulations to 1.0 (doesn't matter what it is)
+    double cell [9] = {1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0};
+    bool uses_pbc  = context.getSystem().usesPeriodicBoundaryConditions();
+    int bc [3] = {0, 0, 0};
+    Vec3 box[3];
+    if (uses_pbc == true)  // WARNING! PBC assumed in ALL direction or NON
+    {
+        context.getPeriodicBoxVectors(box[0], box[1], box[2]);  // get periodic box vectors in nm
+        for (int i = 0; i < 3; i++)
+        {
+            cell[3*i] = box[i][0] * 10.0;  // nm to A
+            cell[3*i+1] = box[i][1] * 10.0;
+            cell[3*i+2] = box[i][2] * 10.0;
+            bc[i] = 1;
+        }
+    } 
+    
     // Pass the cell to Julia
-    double cell [9] = {50.0, 0.0, 0.0, 0.0, 50.0, 0.0, 0.0, 0.0, 50.0};
     double *cellData = (double*)jl_array_data(_cell);
     for (int i = 0; i < 9; i++) cellData[i] = cell[i];
 
-    // TODO OBTAIN THIS AUTOMATICALLY
     // Pass boundary conditions to Julia
-    int bc [3] = {0, 0, 0};
     int32_t *bcData = (int32_t*)jl_array_data(_bc);
     for (int i = 0; i < 3; i++) bcData[i] = bc[i];
 
@@ -132,7 +146,7 @@ double ReferenceCalcExampleForceKernel::execute(ContextImpl& context, bool inclu
 
     // create a global variable for the atoms object at
     jl_set_global(jl_main_module, jl_symbol("at"), at);
-    // jl_eval_string("@show at");  // can be used to print the Atoms object from Julia
+    //jl_eval_string("@show at");  // can be used to print the Atoms object from Julia
 
     // compute the energy
     double E = 0.0;  

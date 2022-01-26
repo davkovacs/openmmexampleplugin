@@ -56,7 +56,7 @@ void ExampleForceProxy::serialize(const void* object, SerializationNode& node) c
 void* ExampleForceProxy::deserialize(const SerializationNode& node) const {
     if (node.getIntProperty("version") != 1)
         throw OpenMMException("Unsupported version number");
-    ExampleForce* force = new ExampleForce();
+    ExampleForce* force = new ExampleForce("dummy_path");
     try {
         const SerializationNode& bonds = node.getChildNode("Bonds");
         for (int i = 0; i < (int) bonds.getChildren().size(); i++) {
