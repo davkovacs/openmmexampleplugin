@@ -55,7 +55,7 @@ namespace ExamplePlugin {
 
 class ExampleForce : public OpenMM::Force {
 public:
-    ExampleForce(std::string IP_path);
+    ExampleForce(const char* IP_path);
 
     int getNumBonds() const;
 

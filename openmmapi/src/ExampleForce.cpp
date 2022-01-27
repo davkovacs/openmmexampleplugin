@@ -34,13 +34,14 @@
 #include "openmm/OpenMMException.h"
 #include "openmm/internal/AssertionUtilities.h"
 #include <iostream>
+#include <string.h>
 
 using namespace ExamplePlugin;
 using namespace OpenMM;
 using namespace std;
 
-ExampleForce::ExampleForce(std::string IP_path) {
-    ace_path = IP_path;
+ExampleForce::ExampleForce(const char* IP_path) {
+    ace_path = std::string(IP_path);
 }
 
 int ExampleForce::addBond(int particle1, int particle2, double length, double k) {

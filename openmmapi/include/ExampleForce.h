@@ -54,7 +54,7 @@ public:
     /**
      * Create an ExampleForce.
      */
-    ExampleForce(std::string IP_path);
+    ExampleForce(const char* IP_path);
     /**
      * Get the number of bond stretch terms in the potential function
      */

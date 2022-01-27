@@ -60,11 +60,6 @@ jl_value_t* _forcefcn;
 jl_value_t* _stressfcn;
 
 void ExampleForceImpl::initialize(ContextImpl& context) {
-    for (int i = 0; i < 8; i++)
-    {
-        double mass = context.getSystem().getParticleMass(i);  // get the mass of the particle
-        cout << mass << "\n";
-    }
     kernel = context.getPlatform().createKernel(CalcExampleForceKernel::Name(), context);
     kernel.getAs<CalcExampleForceKernel>().initialize(context.getSystem(), owner);
     jl_init();  // start up Julia process and load packages
@@ -76,14 +71,22 @@ void ExampleForceImpl::initialize(ContextImpl& context) {
     _forcefcn = (jl_value_t*)jl_eval_string("(calc, at) -> mat(forces(calc, at))[:]");
     _stressfcn = (jl_value_t*)jl_eval_string("(calc, at) -> vcat(stress(calc, at)...)");
 
-    std::string read_ip = "IP = read_dict( load_dict(\"" + this->ip_path +  "\")[\"IP\"])";
-    cout << read_ip << "\n";
-    jl_eval_string(read_ip.c_str());
+    const char* comm1 = "IP = read_dict( load_dict(\"";
+    const char* comm2 = "\")[\"IP\"])";
+    char* read_ip;
+    read_ip = (char*)calloc(strlen(comm1) + strlen(this->ip_path.c_str()) + strlen(comm2) + 1, sizeof(char));
+    strcpy(read_ip, comm1);
+    strcat(read_ip, this->ip_path.c_str());
+    strcat(read_ip, comm2);
+    jl_eval_string(read_ip);
+    free(read_ip);
     //jl_eval_string("IP = read_dict( load_dict(\"/home/cdt1906/Documents/phd/ACE_dev/interfaces/test_openmm/CH_ace_test.json\")[\"IP\"])");
     
     // check if there were any Julia exceptions and print them
-    if (jl_exception_occurred())
+    if (jl_exception_occurred()){
         printf("ERROR DURING INITIALIZATION: %s \n", jl_typeof_str(jl_exception_occurred()));
+        throw OpenMMException("Julia error during initialization of ACE potential");
+    }
 }
 
 double ExampleForceImpl::calcForcesAndEnergy(ContextImpl& context, bool includeForces, bool includeEnergy, int groups) {

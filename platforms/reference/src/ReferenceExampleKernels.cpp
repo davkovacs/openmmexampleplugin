@@ -49,7 +49,7 @@ double unbox_float64(jl_value_t* jlval) {
       return jl_unbox_float64(jlval);
    } 
    jl_errorf("Can't identify the return type!!! \n");
-   return 0.0;
+   throw OpenMMException("Cannot identify return type of energy");;
 }
 
 // map masses to atomic numbers (necessary for ACE)
@@ -158,6 +158,7 @@ double ReferenceCalcExampleForceKernel::execute(ContextImpl& context, bool inclu
         printf("Exception at jl_call2(_energyfcn, calc, at) : %s \n", 
                 jl_typeof_str(jl_exception_occurred()));
         jl_errorf("Something when wrong calling the energy\n");
+        throw OpenMMException("Something went wrong calling the energy");;
     } else {
         E = unbox_float64(jlE);  // unbox energy from Julia Float to C++
     }
