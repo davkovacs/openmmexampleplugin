@@ -45,24 +45,27 @@ ExampleForce::ExampleForce(const char* IP_path) {
 }
 
 int ExampleForce::addBond(int particle1, int particle2, double length, double k) {
-    bonds.push_back(BondInfo(particle1, particle2, length, k));
-    return bonds.size()-1;
+    throw OpenMMException("addBond: Not defined bonded particles in ACE");
+    //bonds.push_back(BondInfo(particle1, particle2, length, k));
+    // return 0; //bonds.size()-1;
 }
 
 void ExampleForce::getBondParameters(int index, int& particle1, int& particle2, double& length, double& k) const {
-    ASSERT_VALID_INDEX(index, bonds);
-    particle1 = bonds[index].particle1;
-    particle2 = bonds[index].particle2;
-    length = bonds[index].length;
-    k = bonds[index].k;
+    throw OpenMMException("getBondParameters: Not defined bonded particles in ACE");
+    // ASSERT_VALID_INDEX(index, bonds);
+    // particle1 = bonds[index].particle1;
+    // particle2 = bonds[index].particle2;
+    // length = bonds[index].length;
+    // k = bonds[index].k;
 }
 
 void ExampleForce::setBondParameters(int index, int particle1, int particle2, double length, double k) {
-    ASSERT_VALID_INDEX(index, bonds);
-    bonds[index].particle1 = particle1;
-    bonds[index].particle2 = particle2;
-    bonds[index].length = length;
-    bonds[index].k = k;
+    throw OpenMMException("setBondParameters: Not defined bonded particles in ACE");
+    // ASSERT_VALID_INDEX(index, bonds);
+    // bonds[index].particle1 = particle1;
+    // bonds[index].particle2 = particle2;
+    // bonds[index].length = length;
+    // bonds[index].k = k;
 }
 
 ForceImpl* ExampleForce::createImpl() const {

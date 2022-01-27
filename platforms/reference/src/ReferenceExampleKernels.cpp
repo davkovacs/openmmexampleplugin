@@ -179,12 +179,13 @@ double ReferenceCalcExampleForceKernel::execute(ContextImpl& context, bool inclu
 }
 
 void ReferenceCalcExampleForceKernel::copyParametersToContext(ContextImpl& context, const ExampleForce& force) {
-    if (force.getNumBonds() != particle1.size())
-        throw OpenMMException("updateParametersInContext: The number of Example bonds has changed");
-    for (int i = 0; i < force.getNumBonds(); i++) {
-        int p1, p2;
-        force.getBondParameters(i, p1, p2, length[i], k[i]);
-        if (p1 != particle1[i] || p2 != particle2[i])
-            throw OpenMMException("updateParametersInContext: A particle index has changed");
-    }
+    throw OpenMMException("updateParametersInContext: Not defined bonded particles in ACE");
+    // if (force.getNumBonds() != particle1.size())
+    //     throw OpenMMException("updateParametersInContext: The number of Example bonds has changed");
+    // for (int i = 0; i < force.getNumBonds(); i++) {
+    //     int p1, p2;
+    //     force.getBondParameters(i, p1, p2, length[i], k[i]);
+    //     if (p1 != particle1[i] || p2 != particle2[i])
+    //         throw OpenMMException("updateParametersInContext: A particle index has changed");
+    // }
 }
