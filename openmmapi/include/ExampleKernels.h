@@ -70,7 +70,9 @@ public:
      * @param _stressfn
      * @return the potential energy due to the force
      */
-    virtual double execute(OpenMM::ContextImpl& context, bool includeForces, bool includeEnergy, jl_function_t*& _atoms_from_c, jl_value_t*& _energyfcn, jl_value_t*& _forcefn, jl_value_t*& _stressfcn) = 0;
+    virtual double execute(OpenMM::ContextImpl& context, bool includeForces, bool includeEnergy, jl_function_t*& _atoms_from_c, 
+                            jl_value_t*& _energyfcn, jl_value_t*& _forcefn, jl_value_t*& _stressfcn,
+                            std::vector<int>& at_inds, std::vector<int>& at_nums) = 0;
     /**
      * Copy changed parameters over to a context.
      *

@@ -52,9 +52,6 @@ double unbox_float64(jl_value_t* jlval) {
    throw OpenMMException("Cannot identify return type of energy");;
 }
 
-// map masses to atomic numbers (necessary for ACE)
-std::map<int, int> mass_to_Z {{1, 1}, {12, 6}, {14, 7}, {16, 8}, {19, 9}, {31, 15}, {32, 16}, {35, 17}, {80, 35}, {127, 53}};
-
 // unit conversion factor between eV and kJ/mol
 const double eV_to_kJ_per_mol = 96.48533212331002; // unit conversion factor from WolframAlpha
 
@@ -70,19 +67,27 @@ static vector<RealVec>& extractForces(ContextImpl& context) {
     return *((vector<RealVec>*) data->forces);
 }
 
+// get Periodic box vectors
+static Vec3* extractBoxVectors(ContextImpl& context) {
+    ReferencePlatform::PlatformData* data = reinterpret_cast<ReferencePlatform::PlatformData*>(context.getPlatformData());
+    return data->periodicBoxVectors;
+} 
+
 void ReferenceCalcExampleForceKernel::initialize(const System& system, const ExampleForce& force) {
+    usePeriodic = force.usesPeriodicBoundaryConditions();
 }
 
-double ReferenceCalcExampleForceKernel::execute(ContextImpl& context, bool includeForces, bool includeEnergy, jl_function_t*& _atoms_from_c, jl_value_t*& _energyfcn, jl_value_t*& _forcefcn, jl_value_t*& _stressfcn) {
-    vector<Vec3>& posData = extractPositions(context);  // get atomic positions
+double ReferenceCalcExampleForceKernel::execute(ContextImpl& context, bool includeForces, bool includeEnergy, jl_function_t*& _atoms_from_c, 
+                                                jl_value_t*& _energyfcn, jl_value_t*& _forcefcn, jl_value_t*& _stressfcn,
+                                                std::vector<int>& at_inds, std::vector<int>& at_nums) {
+    vector<Vec3>& AllposData = extractPositions(context);  // get atomic positions
     vector<RealVec>& force = extractForces(context);  // get forces on the atoms
-    int numParticles = context.getSystem().getNumParticles();  // get number of particles
-    int Z[numParticles];  // create vector to store atomic numbers
-    // loop over the particles
+    //int numParticles = context.getSystem().getNumParticles();  // get number of particles
+    int numParticles = at_inds.size();
+    vector<Vec3> posData(numParticles);
     for (int i = 0; i < numParticles; i++)
     {
-        double mass = context.getSystem().getParticleMass(i);  // get the mass of the particle
-        Z[i] = mass_to_Z[std::round(mass)];  // add atomic number to array
+        posData[i] = AllposData[at_inds[i]];
     }
 
     // create objects to store necessary Julia arrays with correct types 
@@ -105,12 +110,12 @@ double ReferenceCalcExampleForceKernel::execute(ContextImpl& context, bool inclu
 
     // Set the default cell size for non-periodic simulations to 1.0 (doesn't matter what it is)
     double cell [9] = {1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0};
-    bool uses_pbc  = context.getSystem().usesPeriodicBoundaryConditions();
+    //bool uses_pbc  = context.getSystem().usesPeriodicBoundaryConditions();
     int bc [3] = {0, 0, 0};
-    Vec3 box[3];
-    if (uses_pbc == true)  // WARNING! PBC assumed in ALL direction or NON
+    if (usePeriodic)  // WARNING! PBC assumed in ALL direction or NON
     {
-        context.getPeriodicBoxVectors(box[0], box[1], box[2]);  // get periodic box vectors in nm
+        Vec3* box = extractBoxVectors(context);  // get periodic box vectors in nm
+        //context.getPeriodicBoxVectors(box[0], box[1], box[2]);  // get periodic box vectors in nm
         for (int i = 0; i < 3; i++)
         {
             cell[3*i] = box[i][0] * 10.0;  // nm to A
@@ -130,7 +135,7 @@ double ReferenceCalcExampleForceKernel::execute(ContextImpl& context, bool inclu
 
     // Pass atomic numbers to Julia
     int32_t *ZData = (int32_t*)jl_array_data(_Z);
-    for (int i = 0; i < numParticles; i++) ZData[i] = Z[i]; 
+    for (int i = 0; i < numParticles; i++) ZData[i] = at_nums[i]; 
 
     // create atoms object in Julia
     jl_value_t* at_args[] = {(jl_value_t*)_X, (jl_value_t*)_Z, (jl_value_t*)_cell, (jl_value_t*)_bc};   
@@ -170,7 +175,7 @@ double ReferenceCalcExampleForceKernel::execute(ContextImpl& context, bool inclu
     // write forces to the force array. (unit conversion done here)
     for (int i = 0; i < numParticles; i++)
     {
-        force[i] += RealVec(Fdata[3*i] * eV_to_kJ_per_mol * 10, Fdata[3*i+1] * eV_to_kJ_per_mol * 10, Fdata[3*i+2] * eV_to_kJ_per_mol * 10); 
+        force[at_inds[i]] += RealVec(Fdata[3*i] * eV_to_kJ_per_mol * 10, Fdata[3*i+1] * eV_to_kJ_per_mol * 10, Fdata[3*i+2] * eV_to_kJ_per_mol * 10); 
     }
     
     JL_GC_POP();

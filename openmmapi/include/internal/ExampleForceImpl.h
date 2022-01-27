@@ -50,8 +50,8 @@ class System;
 class OPENMM_EXPORT_EXAMPLE ExampleForceImpl : public OpenMM::ForceImpl {
 public:
     ExampleForceImpl(const ExampleForce& owner);
+    const char* get_IP_path() const;
     ~ExampleForceImpl();
-    std::string ip_path;
     void initialize(OpenMM::ContextImpl& context);
     const ExampleForce& getOwner() const {
         return owner;
@@ -67,6 +67,8 @@ public:
     std::vector<std::pair<int, int> > getBondedParticles() const;
     void updateParametersInContext(OpenMM::ContextImpl& context);
 private:
+    std::string ip_path;
+    std::vector<int> at_inds, at_nums; 
     const ExampleForce& owner;
     OpenMM::Kernel kernel;
 };

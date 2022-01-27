@@ -48,7 +48,13 @@ using namespace OpenMM;
 using namespace std;
 
 ExampleForceImpl::ExampleForceImpl(const ExampleForce& owner) : owner(owner) {
-    ip_path = owner.ace_path;
+    ip_path = owner.get_IP_path();
+    at_inds = owner.getAtomInds();
+    at_nums = owner.getAtomicNumbers();
+}
+
+const char* ExampleForceImpl::get_IP_path() const{
+    return ip_path.c_str();
 }
 
 ExampleForceImpl::~ExampleForceImpl() {
@@ -74,9 +80,9 @@ void ExampleForceImpl::initialize(ContextImpl& context) {
     const char* comm1 = "IP = read_dict( load_dict(\"";
     const char* comm2 = "\")[\"IP\"])";
     char* read_ip;
-    read_ip = (char*)calloc(strlen(comm1) + strlen(this->ip_path.c_str()) + strlen(comm2) + 1, sizeof(char));
+    read_ip = (char*)calloc(strlen(comm1) + strlen(this->get_IP_path()) + strlen(comm2) + 1, sizeof(char));
     strcpy(read_ip, comm1);
-    strcat(read_ip, this->ip_path.c_str());
+    strcat(read_ip, this->get_IP_path());
     strcat(read_ip, comm2);
     jl_eval_string(read_ip);
     free(read_ip);
@@ -92,7 +98,8 @@ void ExampleForceImpl::initialize(ContextImpl& context) {
 double ExampleForceImpl::calcForcesAndEnergy(ContextImpl& context, bool includeForces, bool includeEnergy, int groups) {
     if ((groups&(1<<owner.getForceGroup())) != 0)
         // Call the ACE energy and force calculation, pass the necessary function pointers
-        return kernel.getAs<CalcExampleForceKernel>().execute(context, includeForces, includeEnergy, _atoms_from_c, _energyfcn, _forcefcn, _stressfcn);
+        return kernel.getAs<CalcExampleForceKernel>().execute(context, includeForces, includeEnergy, _atoms_from_c, 
+                                                            _energyfcn, _forcefcn, _stressfcn, at_inds, at_nums);
     return 0.0;
 }
 

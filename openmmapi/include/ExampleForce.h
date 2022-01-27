@@ -50,11 +50,68 @@ public:
     /**
      * store path to potential
      */
-    std::string ace_path; 
+    // std::string ace_path; 
     /**
      * Create an ExampleForce.
      */
     ExampleForce(const char* IP_path);
+    const std::string& get_IP_path() const;
+     /**
+     * Set whether this force makes use of periodic boundary conditions.  If this is set
+     * to true, the network must take a 3x3 tensor as its second input, which
+     * is set to the current periodic box vectors.
+     */
+    void setUsesPeriodicBoundaryConditions(bool periodic);
+    /**
+     * Get whether this force makes use of periodic boundary conditions.
+     */
+    bool usesPeriodicBoundaryConditions() const;
+    void setAtomInds(std::vector<int> at_inds);
+    std::vector<int> getAtomInds() const;
+    void setAtomicNumbers(std::vector<int> atomic_numbs);
+    std::vector<int> getAtomicNumbers() const;
+    /**
+     * Get the number of global parameters that the interaction depends on.
+     */
+    int getNumGlobalParameters() const;
+    /**
+     * Add a new global parameter that the interaction may depend on.  The default value provided to
+     * this method is the initial value of the parameter in newly created Contexts.  You can change
+     * the value at any time by calling setParameter() on the Context.
+     *
+     * @param name             the name of the parameter
+     * @param defaultValue     the default value of the parameter
+     * @return the index of the parameter that was added
+     */
+    int addGlobalParameter(const std::string& name, double defaultValue);
+    /**
+     * Get the name of a global parameter.
+     *
+     * @param index     the index of the parameter for which to get the name
+     * @return the parameter name
+     */
+    const std::string& getGlobalParameterName(int index) const;
+    /**
+     * Set the name of a global parameter.
+     *
+     * @param index          the index of the parameter for which to set the name
+     * @param name           the name of the parameter
+     */
+    void setGlobalParameterName(int index, const std::string& name);
+    /**
+     * Get the default value of a global parameter.
+     *
+     * @param index     the index of the parameter for which to get the default value
+     * @return the parameter default value
+     */
+    double getGlobalParameterDefaultValue(int index) const;
+    /**
+     * Set the default value of a global parameter.
+     *
+     * @param index          the index of the parameter for which to set the default value
+     * @param defaultValue   the default value of the parameter
+     */
+    void setGlobalParameterDefaultValue(int index, double defaultValue);
     /**
      * Get the number of bond stretch terms in the potential function
      */
@@ -106,14 +163,29 @@ public:
      * method appropriately to ensure that `System.usesPeriodicBoundaryConditions()` works for all systems containing
      * your force.
      */
-    bool usesPeriodicBoundaryConditions() const {
-        return false;
-    }
+    // bool usesPeriodicBoundaryConditions() const {
+    //     return false;
+    // }
 protected:
     OpenMM::ForceImpl* createImpl() const;
 private:
+    bool usePeriodic;
+    std::string ace_path; 
+    std::vector<int> atom_inds, atomic_numbers; 
+    class GlobalParameterInfo;
+    std::vector<GlobalParameterInfo> globalParameters;
     class BondInfo;
     std::vector<BondInfo> bonds;
+};
+
+class ExampleForce::GlobalParameterInfo {
+public:
+    std::string name;
+    double defaultValue;
+    GlobalParameterInfo() {
+    }
+    GlobalParameterInfo(const std::string& name, double defaultValue) : name(name), defaultValue(defaultValue) {
+    }
 };
 
 /**

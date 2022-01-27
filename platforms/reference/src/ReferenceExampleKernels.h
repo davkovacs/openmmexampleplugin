@@ -65,9 +65,12 @@ public:
      * @param _energyfcn
      * @param _forcefn
      * @param _stressfn  
+     * @param at_inds  atom indices
+     * @param at_nums  atomic numbers
      * @return the potential energy due to the force
      */
-    double execute(OpenMM::ContextImpl& context, bool includeForces, bool includeEnergy, jl_function_t*& _atoms_from_c, jl_value_t*& _energyfcn, jl_value_t*& _forcefn, jl_value_t*& _stressfcn);
+    double execute(OpenMM::ContextImpl& context, bool includeForces, bool includeEnergy, jl_function_t*& _atoms_from_c, 
+                    jl_value_t*& _energyfcn, jl_value_t*& _forcefn, jl_value_t*& _stressfcn, std::vector<int>& at_inds, std::vector<int>& at_nums);
     /**
      * Copy changed parameters over to a context.
      *
@@ -76,9 +79,7 @@ public:
      */
     void copyParametersToContext(OpenMM::ContextImpl& context, const ExampleForce& force);
 private:
-    int numBonds;
-    std::vector<int> particle1, particle2;
-    std::vector<double> length, k;
+    bool usePeriodic;
 };
 
 } // namespace ExamplePlugin

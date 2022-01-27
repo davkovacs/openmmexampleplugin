@@ -2,6 +2,7 @@
 
 %import(module="openmm") "swig/OpenMMSwigHeaders.i"
 %include "swig/typemaps.i"
+%include <std_string.i>
 
 /*
  * The following lines are needed to handle std::vector.
@@ -56,6 +57,16 @@ namespace ExamplePlugin {
 class ExampleForce : public OpenMM::Force {
 public:
     ExampleForce(const char* IP_path);
+
+    const std::string& get_IP_path() const;
+
+    void setUsesPeriodicBoundaryConditions(bool periodic);
+
+    void setAtomicNumbers(std::vector<int> atomic_numbs);
+
+    void setAtomInds(std::vector<int> at_inds);
+
+    bool usesPeriodicBoundaryConditions() const;
 
     int getNumBonds() const;
 

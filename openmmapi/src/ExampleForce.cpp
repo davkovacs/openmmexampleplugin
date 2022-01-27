@@ -35,13 +35,72 @@
 #include "openmm/internal/AssertionUtilities.h"
 #include <iostream>
 #include <string.h>
+#include <fstream>
 
 using namespace ExamplePlugin;
 using namespace OpenMM;
 using namespace std;
 
-ExampleForce::ExampleForce(const char* IP_path) {
+ExampleForce::ExampleForce(const char* IP_path) : usePeriodic(false) {
     ace_path = std::string(IP_path);
+}
+
+const std::string& ExampleForce::get_IP_path() const {
+    return ace_path;
+}
+
+void ExampleForce::setUsesPeriodicBoundaryConditions(bool periodic) {
+    usePeriodic = periodic;
+}
+
+bool ExampleForce::usesPeriodicBoundaryConditions() const {
+    return usePeriodic;
+}
+
+void ExampleForce::setAtomInds(std::vector<int> at_inds) {
+    atom_inds = at_inds;
+}
+
+std::vector<int> ExampleForce::getAtomInds() const {
+    return atom_inds;
+}
+
+void ExampleForce::setAtomicNumbers(std::vector<int> atomic_numbs) {
+    atomic_numbers = atomic_numbs;
+}
+
+std::vector<int> ExampleForce::getAtomicNumbers() const {
+    return atomic_numbers;
+}
+
+
+int ExampleForce::addGlobalParameter(const string& name, double defaultValue) {
+    globalParameters.push_back(GlobalParameterInfo(name, defaultValue));
+    return globalParameters.size()-1;
+}
+
+int ExampleForce::getNumGlobalParameters() const {
+    return globalParameters.size();
+}
+
+const string& ExampleForce::getGlobalParameterName(int index) const {
+    ASSERT_VALID_INDEX(index, globalParameters);
+    return globalParameters[index].name;
+}
+
+void ExampleForce::setGlobalParameterName(int index, const string& name) {
+    ASSERT_VALID_INDEX(index, globalParameters);
+    globalParameters[index].name = name;
+}
+
+double ExampleForce::getGlobalParameterDefaultValue(int index) const {
+    ASSERT_VALID_INDEX(index, globalParameters);
+    return globalParameters[index].defaultValue;
+}
+
+void ExampleForce::setGlobalParameterDefaultValue(int index, double defaultValue) {
+    ASSERT_VALID_INDEX(index, globalParameters);
+    globalParameters[index].defaultValue = defaultValue;
 }
 
 int ExampleForce::addBond(int particle1, int particle2, double length, double k) {
