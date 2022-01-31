@@ -20,29 +20,30 @@ From here the same if you have OpenMM already.
 
 4. This project uses swig to generate the Python interface. If you don't have swig installed, and want to create the python interface run `conda install -c anaconda swig`
 
-5. Than clone this repo, and create a dictionary in which to build the plugin (inside this repo):
+5. Add the julia folder to the LD_LIBRARY_PATH: `export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:~/julia-1.7.1/lib/` 
+
+6. Than clone this repo, and create a dictionary in which to build the plugin (inside this repo):
 
 ```
 mkdir build
 cd build
 ```
 
+7. Run CMake by `ccmake ..`
 
-6. Run CMake by `ccmake ..`
+8. Press c ("Configure").
 
-7. Press c ("Configure").
-
-8. Set OPENMM_DIR to point to the directory where OpenMM is installed.  This is needed to locate
+9. Set OPENMM_DIR to point to the directory where OpenMM is installed.  This is needed to locate
 the OpenMM header files and libraries. For example the directory of your conde environment eg. `~/miniconda3/envs/openmm`
 
-9. Set CMAKE_INSTALL_PREFIX to the directory where the plugin should be installed.  Usually,
+10. Set CMAKE_INSTALL_PREFIX to the directory where the plugin should be installed.  Usually,
 this will be the same as OPENMM_DIR, so the plugin will be added to your OpenMM installation.
 
-10. Set JULIA_DIR to the directory of your julia installation eg. `~/Applications/julia-1.7.1`
+11. Set JULIA_DIR to the directory of your julia installation eg. `~/Applications/julia-1.7.1`
 
-11. Press c ("Configure") again if necessary, then press g ("Generate").
+12. Press c ("Configure") again if necessary, then press g ("Generate").
 
-12. Use the build system you selected to build and install the plugin.  For example, if you
+13. Use the build system you selected to build and install the plugin.  For example, if you
 selected Unix Makefiles, type `make install`.
 
 Python API
