@@ -109,8 +109,8 @@ std::vector<std::string> ExampleForceImpl::getKernelNames() {
     return names;
 }
 
-vector<pair<int, int> > ExampleForceImpl::getBondedParticles() const {
-    throw OpenMMException("getBondedParticles: Not defined bonded particles in ACE");
+//vector<pair<int, int> > ExampleForceImpl::getBondedParticles() const {
+//    throw OpenMMException("getBondedParticles: Not defined bonded particles in ACE");
     // int numBonds = owner.getNumBonds();
     // vector<pair<int, int> > bonds(numBonds);
     // for (int i = 0; i < numBonds; i++) {
@@ -118,7 +118,7 @@ vector<pair<int, int> > ExampleForceImpl::getBondedParticles() const {
     //     owner.getBondParameters(i, bonds[i].first, bonds[i].second, length, k);
     // }
     // return bonds;
-}
+//}
 
 void ExampleForceImpl::updateParametersInContext(ContextImpl& context) {
     kernel.getAs<CalcExampleForceKernel>().copyParametersToContext(context, owner);
