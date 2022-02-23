@@ -1,5 +1,5 @@
 /* -------------------------------------------------------------------------- *
- *                                OpenMMExample                                 *
+ *                                OpenMMACE                                 *
  * -------------------------------------------------------------------------- *
  * This is part of the OpenMM molecular simulation toolkit originating from   *
  * Simbios, the NIH National Center for Physics-Based Simulation of           *
@@ -29,21 +29,21 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE.                                     *
  * -------------------------------------------------------------------------- */
 
-#include "ExampleForceProxy.h"
-#include "ExampleForce.h"
+#include "ACEForceProxy.h"
+#include "ACEForce.h"
 #include "openmm/serialization/SerializationNode.h"
 #include <sstream>
 
-using namespace ExamplePlugin;
+using namespace ACEPlugin;
 using namespace OpenMM;
 using namespace std;
 
-ExampleForceProxy::ExampleForceProxy() : SerializationProxy("ExampleForce") {
+ACEForceProxy::ACEForceProxy() : SerializationProxy("ACEForce") {
 }
 
-void ExampleForceProxy::serialize(const void* object, SerializationNode& node) const {
+void ACEForceProxy::serialize(const void* object, SerializationNode& node) const {
     node.setIntProperty("version", 1);
-    const ExampleForce& force = *reinterpret_cast<const ExampleForce*>(object);
+    const ACEForce& force = *reinterpret_cast<const ACEForce*>(object);
     node.setStringProperty("IP_path", force.get_IP_path());
     node.setIntProperty("forceGroup", force.getForceGroup());
     node.setBoolProperty("usesPeriodic", force.usesPeriodicBoundaryConditions());
@@ -53,10 +53,10 @@ void ExampleForceProxy::serialize(const void* object, SerializationNode& node) c
     }
 }
 
-void* ExampleForceProxy::deserialize(const SerializationNode& node) const {
+void* ACEForceProxy::deserialize(const SerializationNode& node) const {
     if (node.getIntProperty("version") != 1)
         throw OpenMMException("Unsupported version number");
-    ExampleForce* force = new ExampleForce(node.getStringProperty("IP_path").c_str());
+    ACEForce* force = new ACEForce(node.getStringProperty("IP_path").c_str());
     if (node.hasProperty("forceGroup"))
         force->setForceGroup(node.getIntProperty("forceGroup", 0));
     if (node.hasProperty("usesPeriodic"))

@@ -32,8 +32,8 @@
 #ifdef WIN32
   #define _USE_MATH_DEFINES // Needed to get M_PI
 #endif
-#include "internal/ExampleForceImpl.h"
-#include "ExampleKernels.h"
+#include "internal/ACEForceImpl.h"
+#include "ACEKernels.h"
 #include "openmm/OpenMMException.h"
 #include "openmm/internal/ContextImpl.h"
 #include <cmath>
@@ -43,21 +43,21 @@
 #include <julia.h>
 #include <iostream>
 
-using namespace ExamplePlugin;
+using namespace ACEPlugin;
 using namespace OpenMM;
 using namespace std;
 
-ExampleForceImpl::ExampleForceImpl(const ExampleForce& owner) : owner(owner) {
+ACEForceImpl::ACEForceImpl(const ACEForce& owner) : owner(owner) {
     ip_path = owner.get_IP_path();
     at_inds = owner.getAtomInds();
     at_nums = owner.getAtomicNumbers();
 }
 
-const char* ExampleForceImpl::get_IP_path() const{
+const char* ACEForceImpl::get_IP_path() const{
     return ip_path.c_str();
 }
 
-ExampleForceImpl::~ExampleForceImpl() {
+ACEForceImpl::~ACEForceImpl() {
 }
 
 jl_function_t* _atoms_from_c; 
@@ -65,9 +65,9 @@ jl_value_t* _energyfcn;
 jl_value_t* _forcefcn;
 jl_value_t* _stressfcn;
 
-void ExampleForceImpl::initialize(ContextImpl& context) {
-    kernel = context.getPlatform().createKernel(CalcExampleForceKernel::Name(), context);
-    kernel.getAs<CalcExampleForceKernel>().initialize(context.getSystem(), owner);
+void ACEForceImpl::initialize(ContextImpl& context) {
+    kernel = context.getPlatform().createKernel(CalcACEForceKernel::Name(), context);
+    kernel.getAs<CalcACEForceKernel>().initialize(context.getSystem(), owner);
     jl_init();  // start up Julia process and load packages
     jl_eval_string("try using ACE1 catch; using ACE end;");
     jl_eval_string("using JuLIP");
@@ -95,21 +95,21 @@ void ExampleForceImpl::initialize(ContextImpl& context) {
     }
 }
 
-double ExampleForceImpl::calcForcesAndEnergy(ContextImpl& context, bool includeForces, bool includeEnergy, int groups) {
+double ACEForceImpl::calcForcesAndEnergy(ContextImpl& context, bool includeForces, bool includeEnergy, int groups) {
     if ((groups&(1<<owner.getForceGroup())) != 0)
         // Call the ACE energy and force calculation, pass the necessary function pointers
-        return kernel.getAs<CalcExampleForceKernel>().execute(context, includeForces, includeEnergy, _atoms_from_c, 
+        return kernel.getAs<CalcACEForceKernel>().execute(context, includeForces, includeEnergy, _atoms_from_c, 
                                                             _energyfcn, _forcefcn, _stressfcn, at_inds, at_nums);
     return 0.0;
 }
 
-std::vector<std::string> ExampleForceImpl::getKernelNames() {
+std::vector<std::string> ACEForceImpl::getKernelNames() {
     std::vector<std::string> names;
-    names.push_back(CalcExampleForceKernel::Name());
+    names.push_back(CalcACEForceKernel::Name());
     return names;
 }
 
-//vector<pair<int, int> > ExampleForceImpl::getBondedParticles() const {
+//vector<pair<int, int> > ACEForceImpl::getBondedParticles() const {
 //    throw OpenMMException("getBondedParticles: Not defined bonded particles in ACE");
     // int numBonds = owner.getNumBonds();
     // vector<pair<int, int> > bonds(numBonds);
@@ -120,6 +120,6 @@ std::vector<std::string> ExampleForceImpl::getKernelNames() {
     // return bonds;
 //}
 
-void ExampleForceImpl::updateParametersInContext(ContextImpl& context) {
-    kernel.getAs<CalcExampleForceKernel>().copyParametersToContext(context, owner);
+void ACEForceImpl::updateParametersInContext(ContextImpl& context) {
+    kernel.getAs<CalcACEForceKernel>().copyParametersToContext(context, owner);
 }

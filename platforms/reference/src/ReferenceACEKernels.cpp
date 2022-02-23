@@ -29,8 +29,8 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE.                                     *
  * -------------------------------------------------------------------------- */
 
-#include "ReferenceExampleKernels.h"
-#include "ExampleForce.h"
+#include "ReferenceACEKernels.h"
+#include "ACEForce.h"
 #include "openmm/OpenMMException.h"
 #include "openmm/internal/ContextImpl.h"
 #include "openmm/reference/RealVec.h"
@@ -39,7 +39,7 @@
 #include <julia.h>
 
 
-using namespace ExamplePlugin;
+using namespace ACEPlugin;
 using namespace OpenMM;
 using namespace std;
 
@@ -73,11 +73,11 @@ static Vec3* extractBoxVectors(ContextImpl& context) {
     return data->periodicBoxVectors;
 } 
 
-void ReferenceCalcExampleForceKernel::initialize(const System& system, const ExampleForce& force) {
+void ReferenceCalcACEForceKernel::initialize(const System& system, const ACEForce& force) {
     usePeriodic = force.usesPeriodicBoundaryConditions();
 }
 
-double ReferenceCalcExampleForceKernel::execute(ContextImpl& context, bool includeForces, bool includeEnergy, jl_function_t*& _atoms_from_c, 
+double ReferenceCalcACEForceKernel::execute(ContextImpl& context, bool includeForces, bool includeEnergy, jl_function_t*& _atoms_from_c, 
                                                 jl_value_t*& _energyfcn, jl_value_t*& _forcefcn, jl_value_t*& _stressfcn,
                                                 std::vector<int>& at_inds, std::vector<int>& at_nums) {
     vector<Vec3>& AllposData = extractPositions(context);  // get atomic positions
@@ -183,14 +183,6 @@ double ReferenceCalcExampleForceKernel::execute(ContextImpl& context, bool inclu
     return E * eV_to_kJ_per_mol;  // Return energy in kJ/mol
 }
 
-void ReferenceCalcExampleForceKernel::copyParametersToContext(ContextImpl& context, const ExampleForce& force) {
-    throw OpenMMException("updateParametersInContext: Not defined bonded particles in ACE");
-    // if (force.getNumBonds() != particle1.size())
-    //     throw OpenMMException("updateParametersInContext: The number of Example bonds has changed");
-    // for (int i = 0; i < force.getNumBonds(); i++) {
-    //     int p1, p2;
-    //     force.getBondParameters(i, p1, p2, length[i], k[i]);
-    //     if (p1 != particle1[i] || p2 != particle2[i])
-    //         throw OpenMMException("updateParametersInContext: A particle index has changed");
-    // }
+void ReferenceCalcACEForceKernel::copyParametersToContext(ContextImpl& context, const ACEForce& force) {
+    throw OpenMMException("copyParametersToContext: Not implemented in ACE");
 }

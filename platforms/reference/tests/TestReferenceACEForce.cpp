@@ -1,5 +1,5 @@
 /* -------------------------------------------------------------------------- *
- *                                OpenMMExample                                 *
+ *                                   OpenMM                                   *
  * -------------------------------------------------------------------------- *
  * This is part of the OpenMM molecular simulation toolkit originating from   *
  * Simbios, the NIH National Center for Physics-Based Simulation of           *
@@ -29,56 +29,33 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE.                                     *
  * -------------------------------------------------------------------------- */
 
-#include "ExampleForce.h"
-#include "openmm/Platform.h"
-#include "openmm/internal/AssertionUtilities.h"
-#include "openmm/serialization/XmlSerializer.h"
-#include <iostream>
-#include <sstream>
+/**
+ * This tests the Reference implementation of ACEForce.
+ */
 
-using namespace ExamplePlugin;
+#include "ACEForce.h"
+#include "openmm/internal/AssertionUtilities.h"
+#include "openmm/Context.h"
+#include "openmm/Platform.h"
+#include "openmm/System.h"
+#include "openmm/VerletIntegrator.h"
+#include <cmath>
+#include <iostream>
+#include <vector>
+
+using namespace ACEPlugin;
 using namespace OpenMM;
 using namespace std;
 
-extern "C" void registerExampleSerializationProxies();
+extern "C" OPENMM_EXPORT void registerACEReferenceKernelFactories();
 
-void testSerialization() {
-    // Create a Force.
+// TODO implement these
+void testForce() {
+}
 
-    ExampleForce force("ACE.json");
-    force.setForceGroup(3);
-    force.addGlobalParameter("x", 1.3);
-    force.addGlobalParameter("y", 2.221);
-    force.setUsesPeriodicBoundaryConditions(true);
-
-    // Serialize and then deserialize it.
-
-    stringstream buffer;
-    XmlSerializer::serialize<ExampleForce>(&force, "Force", buffer);
-    ExampleForce* copy = XmlSerializer::deserialize<ExampleForce>(buffer);
-
-    // Compare the two forces to see if they are identical.
-
-    ExampleForce& force2 = *copy;
-    ASSERT_EQUAL(force.get_IP_path(), force2.get_IP_path());
-    ASSERT_EQUAL(force.getForceGroup(), force2.getForceGroup());
-    ASSERT_EQUAL(force.getNumGlobalParameters(), force2.getNumGlobalParameters());
-    for (int i = 0; i < force.getNumGlobalParameters(); i++) {
-        ASSERT_EQUAL(force.getGlobalParameterName(i), force2.getGlobalParameterName(i));
-        ASSERT_EQUAL(force.getGlobalParameterDefaultValue(i), force2.getGlobalParameterDefaultValue(i));
-    }
-    ASSERT_EQUAL(force.usesPeriodicBoundaryConditions(), force2.usesPeriodicBoundaryConditions());
+void testChangingParameters() {
 }
 
 int main() {
-    try {
-        registerExampleSerializationProxies();
-        testSerialization();
-    }
-    catch(const exception& e) {
-        cout << "exception: " << e.what() << endl;
-        return 1;
-    }
-    cout << "Done" << endl;
     return 0;
 }

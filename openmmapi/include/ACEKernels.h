@@ -1,5 +1,5 @@
-#ifndef OPENMM_REFERENCEEXAMPLEKERNELFACTORY_H_
-#define OPENMM_REFERENCEEXAMPLEKERNELFACTORY_H_
+#ifndef ACE_KERNELS_H_
+#define ACE_KERNELS_H_
 
 /* -------------------------------------------------------------------------- *
  *                                   OpenMM                                   *
@@ -32,19 +32,56 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE.                                     *
  * -------------------------------------------------------------------------- */
 
-#include "openmm/KernelFactory.h"
+#include "ACEForce.h"
+#include "openmm/KernelImpl.h"
+#include "openmm/Platform.h"
+#include "openmm/System.h"
+#include <string>
+#include <julia.h>
 
-namespace OpenMM {
+namespace ACEPlugin {
 
 /**
- * This KernelFactory creates kernels for the reference implementation of the Example plugin.
+ * This kernel is invoked by ACEForce to calculate the forces acting on the system and the energy of the system.
  */
-
-class ReferenceExampleKernelFactory : public KernelFactory {
+class CalcACEForceKernel : public OpenMM::KernelImpl {
 public:
-    KernelImpl* createKernelImpl(std::string name, const Platform& platform, ContextImpl& context) const;
+    static std::string Name() {
+        return "CalcACEForce";
+    }
+    CalcACEForceKernel(std::string name, const OpenMM::Platform& platform) : OpenMM::KernelImpl(name, platform) {
+    }
+    /**
+     * Initialize the kernel.
+     * 
+     * @param system     the System this kernel will be applied to
+     * @param force      the ACEForce this kernel will be used for
+     */
+    virtual void initialize(const OpenMM::System& system, const ACEForce& force) = 0;
+    /**
+     * Execute the kernel to calculate the forces and/or energy.
+     *
+     * @param context        the context in which to execute this kernel
+     * @param includeForces  true if forces should be calculated
+     * @param includeEnergy  true if the energy should be calculated
+     * @param _atoms_from_c
+     * @param _energyfcn
+     * @param _forcefn
+     * @param _stressfn
+     * @return the potential energy due to the force
+     */
+    virtual double execute(OpenMM::ContextImpl& context, bool includeForces, bool includeEnergy, jl_function_t*& _atoms_from_c, 
+                            jl_value_t*& _energyfcn, jl_value_t*& _forcefn, jl_value_t*& _stressfcn,
+                            std::vector<int>& at_inds, std::vector<int>& at_nums) = 0;
+    /**
+     * Copy changed parameters over to a context.
+     *
+     * @param context    the context to copy parameters to
+     * @param force      the ACEForce to copy the parameters from
+     */
+    virtual void copyParametersToContext(OpenMM::ContextImpl& context, const ACEForce& force) = 0;
 };
 
-} // namespace OpenMM
+} // namespace ACEPlugin
 
-#endif /*OPENMM_REFERENCEEXAMPLEKERNELFACTORY_H_*/
+#endif /*ACE_KERNELS_H_*/

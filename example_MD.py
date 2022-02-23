@@ -2,7 +2,7 @@
 Script to create and run a hybrid ACE/MM simulation of a molecule in water. 
 This uses the ACE custom openmm plugin
 """
-from exampleplugin import ExampleForce # this is the ace plugin
+from ACEplugin import ACEForce # this is the ACE plugin
 from os import stat
 from openmm import app, openmm, unit
 from openmm.app import *
@@ -31,34 +31,34 @@ class ACEPotentialImpl(MLPotentialImpl):
 
     def addForces(self, topology: app.Topology, system: openmm.System, atoms: Optional[Iterable[int]], forceGroup: int, **args):
     
-        # get the list of atoms to apply the ace force to
+        # get the list of atoms to apply the ACE force to
         includedAtoms = list(topology.atoms())
         if atoms is not None:
             includedAtoms = [includedAtoms[i] for i in atoms]
         # get the atomic numbers for each atom from the topology
         elements = [atom.element.atomic_number for atom in includedAtoms]
 
-        # create the ace force  by loading the parameter file
-        ace_force = ExampleForce(self.parameter_file)
-        ace_force.setAtomicNumbers(elements)
-        ace_force.setAtomInds(atoms)
+        # create the ACE force  by loading the parameter file
+        ACE_force = ACEForce(self.parameter_file)
+        ACE_force.setAtomicNumbers(elements)
+        ACE_force.setAtomInds(atoms)
         if topology.getPeriodicBoxVectors() is not None:
-            ace_force.setUsesPeriodicBoundaryConditions(True)
-        ace_force.setForceGroup(forceGroup)
-        system.addForce(ace_force)
+            ACE_force.setUsesPeriodicBoundaryConditions(True)
+        ACE_force.setForceGroup(forceGroup)
+        system.addForce(ACE_force)
 
 # now register to new potentials
-MLPotential.registerImplFactory("ace", ACEPoentialImpFratory())
+MLPotential.registerImplFactory("ACE", ACEPoentialImpFratory())
 
 
 # running the simulation
-ACE_PARAMETER_FILE = "../ACE1_bace17.json"   # add the file path here to the model 
+ACE_PARAMETER_FILE = "../ACE1_bACE17.json"   # add the file path here to the model 
 # 1. build the normal mm system 
-ace_potential = MLPotential("ace", parameter_file=ACE_PARAMETER_FILE)
+ACE_potential = MLPotential("ACE", parameter_file=ACE_PARAMETER_FILE)
 
-pdb_file = app.PDBFile("../bace_water.pdb")
+pdb_file = app.PDBFile("../bACE_water.pdb")
 # work out the indices of the ligand atoms, we know they have id UNL
-ace_atoms = [atom.index for atom in pdb_file.topology.atoms() if atom.residue.name == "UNL"]
+ACE_atoms = [atom.index for atom in pdb_file.topology.atoms() if atom.residue.name == "UNL"]
 
 # load the ligand and water force fields
 ff = app.ForceField("../lig_CAT-17d.xml", "tip3p.xml")
@@ -67,7 +67,7 @@ ff = app.ForceField("../lig_CAT-17d.xml", "tip3p.xml")
 mm_system = ff.createSystem(topology=pdb_file.topology, nonbondedMethod=app.PME, nonbondedCutoff=1 * unit.nanometer)
 
 # # create the mixed system
-hybrid_system = ace_potential.createMixedSystem(topology=pdb_file.topology, system=mm_system, atoms=ace_atoms)
+hybrid_system = ACE_potential.createMixedSystem(topology=pdb_file.topology, system=mm_system, atoms=ACE_atoms)
 
 temperature = 300 * unit.kelvin
 hybrid_system.addForce(openmm.MonteCarloBarostat(1 * unit.atmosphere, temperature)) 

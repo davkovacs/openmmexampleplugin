@@ -1,5 +1,5 @@
-#ifndef OPENMM_EXAMPLEFORCEIMPL_H_
-#define OPENMM_EXAMPLEFORCEIMPL_H_
+#ifndef OPENMM_ACEFORCEIMPL_H_
+#define OPENMM_ACEFORCEIMPL_H_
 
 /* -------------------------------------------------------------------------- *
  *                                   OpenMM                                   *
@@ -32,28 +32,28 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE.                                     *
  * -------------------------------------------------------------------------- */
 
-#include "ExampleForce.h"
+#include "ACEForce.h"
 #include "openmm/internal/ForceImpl.h"
 #include "openmm/Kernel.h"
 #include <utility>
 #include <set>
 #include <string>
 
-namespace ExamplePlugin {
+namespace ACEPlugin {
 
 class System;
 
 /**
- * This is the internal implementation of ExampleForce.
+ * This is the internal implementation of ACEForce.
  */
 
-class OPENMM_EXPORT_EXAMPLE ExampleForceImpl : public OpenMM::ForceImpl {
+class OPENMM_EXPORT_ACE ACEForceImpl : public OpenMM::ForceImpl {
 public:
-    ExampleForceImpl(const ExampleForce& owner);
+    ACEForceImpl(const ACEForce& owner);
     const char* get_IP_path() const;
-    ~ExampleForceImpl();
+    ~ACEForceImpl();
     void initialize(OpenMM::ContextImpl& context);
-    const ExampleForce& getOwner() const {
+    const ACEForce& getOwner() const {
         return owner;
     }
     void updateContextState(OpenMM::ContextImpl& context, bool& forcesInvalid) {
@@ -69,10 +69,10 @@ public:
 private:
     std::string ip_path;
     std::vector<int> at_inds, at_nums; 
-    const ExampleForce& owner;
+    const ACEForce& owner;
     OpenMM::Kernel kernel;
 };
 
-} // namespace ExamplePlugin
+} // namespace ACEPlugin
 
-#endif /*OPENMM_EXAMPLEFORCEIMPL_H_*/
+#endif /*OPENMM_ACEFORCEIMPL_H_*/

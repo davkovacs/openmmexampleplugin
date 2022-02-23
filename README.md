@@ -22,7 +22,7 @@ From here the same if you have OpenMM already.
 
 5. Add the julia folder to the LD_LIBRARY_PATH: `export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:~/julia-1.7.1/lib/` 
 
-6. Than clone this repo, and create a dictionary in which to build the plugin (inside this repo):
+6. Then clone this repo, and create a dictionary in which to build the plugin (inside this repo):
 
 ```
 mkdir build
@@ -64,7 +64,7 @@ the potential bugs that would come from having duplicate definitions.
 To build and install the Python API, build the "PythonInstall" target, for example by typing
 "make PythonInstall".  (If you are installing into the system Python, you may need to use sudo.)
 This runs SWIG to generate the C++ and Python files for the extension module
-(ExamplePluginWrapper.cpp and exampleplugin.py), then runs a setup.py script to build and
+(ACEPluginWrapper.cpp and ACEplugin.py), then runs a setup.py script to build and
 install the module. 
 
 

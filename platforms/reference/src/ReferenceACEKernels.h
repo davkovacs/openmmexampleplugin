@@ -1,5 +1,5 @@
-#ifndef REFERENCE_EXAMPLE_KERNELS_H_
-#define REFERENCE_EXAMPLE_KERNELS_H_
+#ifndef REFERENCE_ACE_KERNELS_H_
+#define REFERENCE_ACE_KERNELS_H_
 
 /* -------------------------------------------------------------------------- *
  *                                   OpenMM                                   *
@@ -32,29 +32,29 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE.                                     *
  * -------------------------------------------------------------------------- */
 
-#include "ExampleKernels.h"
+#include "ACEKernels.h"
 #include "openmm/Platform.h"
 #include <vector>
 #include <julia.h>
 
 double unbox_float64(jl_value_t*);
 
-namespace ExamplePlugin {
+namespace ACEPlugin {
 
 /**
- * This kernel is invoked by ExampleForce to calculate the forces acting on the system and the energy of the system.
+ * This kernel is invoked by ACEForce to calculate the forces acting on the system and the energy of the system.
  */
-class ReferenceCalcExampleForceKernel : public CalcExampleForceKernel {
+class ReferenceCalcACEForceKernel : public CalcACEForceKernel {
 public:
-    ReferenceCalcExampleForceKernel(std::string name, const OpenMM::Platform& platform) : CalcExampleForceKernel(name, platform) {
+    ReferenceCalcACEForceKernel(std::string name, const OpenMM::Platform& platform) : CalcACEForceKernel(name, platform) {
     }
     /**
      * Initialize the kernel.
      * 
      * @param system     the System this kernel will be applied to
-     * @param force      the ExampleForce this kernel will be used for
+     * @param force      the ACEForce this kernel will be used for
      */
-    void initialize(const OpenMM::System& system, const ExampleForce& force);
+    void initialize(const OpenMM::System& system, const ACEForce& force);
     /**
      * Execute the kernel to calculate the forces and/or energy.
      *
@@ -75,13 +75,13 @@ public:
      * Copy changed parameters over to a context.
      *
      * @param context    the context to copy parameters to
-     * @param force      the ExampleForce to copy the parameters from
+     * @param force      the ACEForce to copy the parameters from
      */
-    void copyParametersToContext(OpenMM::ContextImpl& context, const ExampleForce& force);
+    void copyParametersToContext(OpenMM::ContextImpl& context, const ACEForce& force);
 private:
     bool usePeriodic;
 };
 
-} // namespace ExamplePlugin
+} // namespace ACEPlugin
 
-#endif /*REFERENCE_EXAMPLE_KERNELS_H_*/
+#endif /*REFERENCE_ACE_KERNELS_H_*/

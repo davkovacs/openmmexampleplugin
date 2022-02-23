@@ -1,5 +1,5 @@
 /* -------------------------------------------------------------------------- *
- *                                OpenMMExample                                 *
+ *                                OpenMMACE                                 *
  * -------------------------------------------------------------------------- *
  * This is part of the OpenMM molecular simulation toolkit originating from   *
  * Simbios, the NIH National Center for Physics-Based Simulation of           *
@@ -38,25 +38,25 @@
 #include <cstdlib>
 #endif
 
-#include "ExampleForce.h"
-#include "ExampleForceProxy.h"
+#include "ACEForce.h"
+#include "ACEForceProxy.h"
 #include "openmm/serialization/SerializationProxy.h"
 
 #if defined(WIN32)
     #include <windows.h>
-    extern "C" OPENMM_EXPORT_EXAMPLE void registerExampleSerializationProxies();
+    extern "C" OPENMM_EXPORT_ACE void registerACESerializationProxies();
     BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved) {
         if (ul_reason_for_call == DLL_PROCESS_ATTACH)
-            registerExampleSerializationProxies();
+            registerACESerializationProxies();
         return TRUE;
     }
 #else
-    extern "C" void __attribute__((constructor)) registerExampleSerializationProxies();
+    extern "C" void __attribute__((constructor)) registerACESerializationProxies();
 #endif
 
-using namespace ExamplePlugin;
+using namespace ACEPlugin;
 using namespace OpenMM;
 
-extern "C" OPENMM_EXPORT_EXAMPLE void registerExampleSerializationProxies() {
-    SerializationProxy::registerProxy(typeid(ExampleForce), new ExampleForceProxy());
+extern "C" OPENMM_EXPORT_ACE void registerACESerializationProxies() {
+    SerializationProxy::registerProxy(typeid(ACEForce), new ACEForceProxy());
 }

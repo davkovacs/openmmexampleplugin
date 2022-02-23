@@ -1,5 +1,5 @@
-#ifndef OPENMM_EXAMPLEFORCE_H_
-#define OPENMM_EXAMPLEFORCE_H_
+#ifndef OPENMM_ACEForce_H_
+#define OPENMM_ACEForce_H_
 
 /* -------------------------------------------------------------------------- *
  *                                   OpenMM                                   *
@@ -35,26 +35,21 @@
 #include "openmm/Context.h"
 #include "openmm/Force.h"
 #include <vector>
-#include "internal/windowsExportExample.h"
+#include "internal/windowsExportACE.h"
 #include <string>
 
-namespace ExamplePlugin {
+namespace ACEPlugin {
 
 /**
- * This class implements an anharmonic bond force of the form E(r)=k*(r-length)^4.  It exists to
- * serve as an example of how to write plugins.
+ * This class implements an ACE potential.  
  */
 
-class OPENMM_EXPORT_EXAMPLE ExampleForce : public OpenMM::Force {
+class OPENMM_EXPORT_ACE ACEForce : public OpenMM::Force {
 public:
     /**
-     * store path to potential
+     * Create an ACEForce.
      */
-    // std::string ace_path; 
-    /**
-     * Create an ExampleForce.
-     */
-    ExampleForce(const char* IP_path);
+    ACEForce(const char* IP_path);
     const std::string& get_IP_path() const;
      /**
      * Set whether this force makes use of periodic boundary conditions.  If this is set
@@ -112,51 +107,7 @@ public:
      * @param defaultValue   the default value of the parameter
      */
     void setGlobalParameterDefaultValue(int index, double defaultValue);
-    /**
-     * Get the number of bond stretch terms in the potential function
-     */
-    int getNumBonds() const {
-        return bonds.size();
-    }
-    /**
-     * Add a bond term to the force.
-     *
-     * @param particle1 the index of the first particle connected by the bond
-     * @param particle2 the index of the second particle connected by the bond
-     * @param length    the equilibrium length of the bond, measured in nm
-     * @param k         the force constant for the bond, measured in kJ/mol/nm^4
-     * @return the index of the bond that was added
-     */
-    int addBond(int particle1, int particle2, double length, double k);
-    /**
-     * Get the force field parameters for a bond term.
-     * 
-     * @param index     the index of the bond for which to get parameters
-     * @param particle1 the index of the first particle connected by the bond
-     * @param particle2 the index of the second particle connected by the bond
-     * @param length    the equilibrium length of the bond, measured in nm
-     * @param k         the harmonic force constant for the bond, measured in kJ/mol/nm^4
-     */
-    void getBondParameters(int index, int& particle1, int& particle2, double& length, double& k) const;
-    /**
-     * Set the force field parameters for a bond term.
-     * 
-     * @param index     the index of the bond for which to set parameters
-     * @param particle1 the index of the first particle connected by the bond
-     * @param particle2 the index of the second particle connected by the bond
-     * @param length    the equilibrium length of the bond, measured in nm
-     * @param k         the harmonic force constant for the bond, measured in kJ/mol/nm^4
-     */
-    void setBondParameters(int index, int particle1, int particle2, double length, double k);
-    /**
-     * Update the per-bond parameters in a Context to match those stored in this Force object.  This method provides
-     * an efficient method to update certain parameters in an existing Context without needing to reinitialize it.
-     * Simply call setBondParameters() to modify this object's parameters, then call updateParametersInState()
-     * to copy them over to the Context.
-     * 
-     * The only information this method updates is the values of per-bond parameters.  The set of particles involved
-     * in a bond cannot be changed, nor can new bonds be added.
-     */
+
     void updateParametersInContext(OpenMM::Context& context);
     /**
      * Returns true if the force uses periodic boundary conditions and false otherwise. Your force should implement this
@@ -174,11 +125,9 @@ private:
     std::vector<int> atom_inds, atomic_numbers; 
     class GlobalParameterInfo;
     std::vector<GlobalParameterInfo> globalParameters;
-    class BondInfo;
-    std::vector<BondInfo> bonds;
 };
 
-class ExampleForce::GlobalParameterInfo {
+class ACEForce::GlobalParameterInfo {
 public:
     std::string name;
     double defaultValue;
@@ -188,23 +137,6 @@ public:
     }
 };
 
-/**
- * This is an internal class used to record information about a bond.
- * @private
- */
-class ExampleForce::BondInfo {
-public:
-    int particle1, particle2;
-    double length, k;
-    BondInfo() {
-        particle1 = particle2 = -1;
-        length = k = 0.0;
-    }
-    BondInfo(int particle1, int particle2, double length, double k) :
-        particle1(particle1), particle2(particle2), length(length), k(k) {
-    }
-};
+} // namespace ACEPlugin
 
-} // namespace ExamplePlugin
-
-#endif /*OPENMM_EXAMPLEFORCE_H_*/
+#endif /*OPENMM_ACEForce_H_*/

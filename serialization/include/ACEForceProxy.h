@@ -1,8 +1,8 @@
-#ifndef EXAMPLE_KERNELS_H_
-#define EXAMPLE_KERNELS_H_
+#ifndef OPENMM_ACE_FORCE_PROXY_H_
+#define OPENMM_ACE_FORCE_PROXY_H_
 
 /* -------------------------------------------------------------------------- *
- *                                   OpenMM                                   *
+ *                                OpenMMACE                                 *
  * -------------------------------------------------------------------------- *
  * This is part of the OpenMM molecular simulation toolkit originating from   *
  * Simbios, the NIH National Center for Physics-Based Simulation of           *
@@ -32,56 +32,22 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE.                                     *
  * -------------------------------------------------------------------------- */
 
-#include "ExampleForce.h"
-#include "openmm/KernelImpl.h"
-#include "openmm/Platform.h"
-#include "openmm/System.h"
-#include <string>
-#include <julia.h>
+#include "internal/windowsExportACE.h"
+#include "openmm/serialization/SerializationProxy.h"
 
-namespace ExamplePlugin {
+namespace OpenMM {
 
 /**
- * This kernel is invoked by ExampleForce to calculate the forces acting on the system and the energy of the system.
+ * This is a proxy for serializing ACEForce objects.
  */
-class CalcExampleForceKernel : public OpenMM::KernelImpl {
+
+class OPENMM_EXPORT_ACE ACEForceProxy : public SerializationProxy {
 public:
-    static std::string Name() {
-        return "CalcExampleForce";
-    }
-    CalcExampleForceKernel(std::string name, const OpenMM::Platform& platform) : OpenMM::KernelImpl(name, platform) {
-    }
-    /**
-     * Initialize the kernel.
-     * 
-     * @param system     the System this kernel will be applied to
-     * @param force      the ExampleForce this kernel will be used for
-     */
-    virtual void initialize(const OpenMM::System& system, const ExampleForce& force) = 0;
-    /**
-     * Execute the kernel to calculate the forces and/or energy.
-     *
-     * @param context        the context in which to execute this kernel
-     * @param includeForces  true if forces should be calculated
-     * @param includeEnergy  true if the energy should be calculated
-     * @param _atoms_from_c
-     * @param _energyfcn
-     * @param _forcefn
-     * @param _stressfn
-     * @return the potential energy due to the force
-     */
-    virtual double execute(OpenMM::ContextImpl& context, bool includeForces, bool includeEnergy, jl_function_t*& _atoms_from_c, 
-                            jl_value_t*& _energyfcn, jl_value_t*& _forcefn, jl_value_t*& _stressfcn,
-                            std::vector<int>& at_inds, std::vector<int>& at_nums) = 0;
-    /**
-     * Copy changed parameters over to a context.
-     *
-     * @param context    the context to copy parameters to
-     * @param force      the ExampleForce to copy the parameters from
-     */
-    virtual void copyParametersToContext(OpenMM::ContextImpl& context, const ExampleForce& force) = 0;
+    ACEForceProxy();
+    void serialize(const void* object, SerializationNode& node) const;
+    void* deserialize(const SerializationNode& node) const;
 };
 
-} // namespace ExamplePlugin
+} // namespace OpenMM
 
-#endif /*EXAMPLE_KERNELS_H_*/
+#endif /*OPENMM_ACE_FORCE_PROXY_H_*/
